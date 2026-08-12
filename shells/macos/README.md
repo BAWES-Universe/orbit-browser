@@ -11,7 +11,9 @@ only (no Xcode, no xcodebuild).
 
 ```
 macos/
-  OrbitBrowser/            SwiftPM executable package
+  OrbitBrowser.xcodeproj        hand-authored Xcode project (objectVersion 46)
+    xcshareddata/xcschemes/     shared scheme for headless xcodebuild / CI
+  OrbitBrowser/            SwiftPM executable package (CLT-only local builds)
     Package.swift          swift-tools 6.0; links WebKit + AppKit
     Info.plist             app bundle plist (com.bawes.orbitbrowser)
     Sources/
@@ -22,6 +24,10 @@ macos/
     build-app.sh           build → assemble → lint → ad-hoc sign → verify
   build/                   assembled OrbitBrowser.app (gitignored)
 ```
+
+> The Xcode project references the **same Sources/** files as the SwiftPM
+> package — no duplication. Local Mac builds stay CLT-only (`swift build`);
+> cloud CI / Fastlane / EAS build via the Xcode project.
 
 ## What the shell does (Q1)
 

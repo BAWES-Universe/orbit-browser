@@ -1,0 +1,69 @@
+name: Apple Shell CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: apple-shell-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  macos-shell-build:
+    name: Build macOS shell (Xcode)
+    runs-on: macos-14
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_15.4.app
+
+      - name: Build OrbitBrowser (macOS)
+        run: |
+          xcodebuild \
+            -project shells/macos/OrbitBrowser.xcodeproj \
+            -scheme OrbitBrowser \
+            -configuration Debug \
+            -derivedDataPath shells/macos/DerivedData \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Verify app bundle
+        run: |
+          APP=$(find shells/macos/DerivedData/Build/Products -name "OrbitBrowser.app" -type d | head -1)
+          test -n "$APP" && echo "app bundle: $APP"
+          plutil -lint "$APP/Contents/Info.plist"
+          test -x "$APP/Contents/MacOS/OrbitBrowser" && echo "binary present"
+
+  ios-shell-build:
+    name: Build iOS shell (Xcode)
+    runs-on: macos-14
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_15.4.app
+
+      - name: Build OrbitBrowser (iOS Simulator)
+        run: |
+          xcodebuild \
+            -project shells/ios/OrbitBrowser.xcodeproj \
+            -scheme OrbitBrowser \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            -derivedDataPath shells/ios/DerivedData \
+            CODE_SIGNING_ALLOWED=NO \
+            build
+
+      - name: Verify app bundle
+        run: |
+          APP=$(find shells/ios/DerivedData/Build/Products -name "OrbitBrowser.app" -type d | head -1)
+          test -n "$APP" && echo "app bundle: $APP"
+          test -x "$APP/OrbitBrowser" && echo "binary present"
