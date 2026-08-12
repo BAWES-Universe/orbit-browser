@@ -42,3 +42,9 @@ shells/*/DerivedData/
 shells/ios/*.xcworkspace/xcuserdata/
 shells/ios/*.xcodeproj/xcuserdata/
 shells/macos/*.xcodeproj/xcuserdata/
+
+# macOS shell (Q-ORBIT-01): SwiftPM artifacts + assembled app bundles
+shells/macos/OrbitBrowser/.build/
+shells/macos/OrbitBrowser/.swiftpm/
+shells/macos/**/*.app/
+shells/macos/OrbitBrowser/*.app/
