@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# Build outputs
+dist/
+build/
+*.tsbuildinfo
+.next/
+out/
+
+# PWA / Workbox generated
+web-app/dev-dist/
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# Coverage
+coverage/
+
+# Shell builds
+shells/*/build/
+shells/*/DerivedData/
+shells/ios/*.xcworkspace/xcuserdata/
+shells/ios/*.xcodeproj/xcuserdata/
+shells/macos/*.xcodeproj/xcuserdata/

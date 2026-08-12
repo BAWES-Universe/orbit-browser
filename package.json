@@ -1,0 +1,24 @@
+{
+  "name": "orbit-browser",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Orbit Browser — hardened shell browser for the BAWES Universe. Thin shell (no browser internals): rules-enforcement UI, Comet-like AI assist, preloads, identity.",
+  "workspaces": [
+    "web-app",
+    "shared",
+    "shells/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace web-app",
+    "build": "npm run build --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "clean": "npm run clean --workspaces --if-present"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT"
+}
