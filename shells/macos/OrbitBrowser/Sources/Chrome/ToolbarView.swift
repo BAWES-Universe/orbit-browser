@@ -106,15 +106,23 @@ final class ToolbarView: NSView {
         }
     }
 
+    private let avatarGradient = CAGradientLayer()
+
+    override func layout() {
+        super.layout()
+        // CAGradientLayer has zero bounds by default and does not track its
+        // superlayer's size; keep it in sync with the avatar on every layout.
+        avatarGradient.frame = avatarView.bounds
+    }
+
     private func makeAvatar() {
         avatarView.wantsLayer = true
         avatarView.layer?.cornerRadius = 15
-        let gradient = CAGradientLayer()
-        gradient.colors = [Theme.bananaGold.cgColor, Theme.indigo.cgColor]
-        gradient.startPoint = CGPoint(x: 0, y: 0)
-        gradient.endPoint = CGPoint(x: 1, y: 1)
-        gradient.cornerRadius = 15
-        avatarView.layer?.addSublayer(gradient)
+        avatarGradient.colors = [Theme.bananaGold.cgColor, Theme.indigo.cgColor]
+        avatarGradient.startPoint = CGPoint(x: 0, y: 0)
+        avatarGradient.endPoint = CGPoint(x: 1, y: 1)
+        avatarGradient.cornerRadius = 15
+        avatarView.layer?.addSublayer(avatarGradient)
 
         let initial = NSTextField(labelWithString: "K")
         initial.font = .systemFont(ofSize: 13, weight: .bold)

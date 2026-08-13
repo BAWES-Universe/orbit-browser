@@ -17,8 +17,9 @@ macos/
     Sources/
       App/                 NSApplication entry point + programmatic main menu
       BrowserView/         WKWebView wrapper, window controller
-      Chrome/              Theme.swift tokens + TabStrip, AddressBar, Toolbar,
-                           StartPage (glass chrome + native start page)
+      Theme.swift          design tokens (colors, radii, metrics)
+      Chrome/              TabStrip, AddressBar, Toolbar, StartPage (glass
+                           chrome + native start page)
       Bridge/              shell↔web bridge stub (window.orbitBridge.post)
   scripts/
     build-app.sh           build → assemble → lint → ad-hoc sign → verify

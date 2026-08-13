@@ -166,6 +166,12 @@ final class BrowserWindowController: NSWindowController {
 
     // MARK: - Chrome state
 
+    /// Tracks the last tab whose chrome state we rendered, so autofocus fires
+    /// only on a real transition into the start page (new/selected tab or a
+    /// navigation back to it) — not when a background tab finishes loading.
+    private var lastChromeTab: BrowserTab?
+    private var lastChromeShowedStartPage = false
+
     private func updateChrome() {
         guard let tab = selectedTab else { return }
 
@@ -177,8 +183,17 @@ final class BrowserWindowController: NSWindowController {
         toolbar.updateTabs(titles: tabs.map(\.title), selectedIndex: selectedIndex)
 
         if tab.showsStartPage {
-            startPageView.focusFieldIfNeeded()
+            // Autofocus only when the *selected* tab just entered the start
+            // page. A background tab's onNavigationUpdate re-runs this and
+            // must not steal focus from the address bar or page content.
+            let selectedTabChanged = tab !== lastChromeTab
+            let enteredStartPage = selectedTabChanged || !lastChromeShowedStartPage
+            if enteredStartPage {
+                startPageView.focusFieldIfNeeded()
+            }
         }
+        lastChromeTab = tab
+        lastChromeShowedStartPage = tab.showsStartPage
     }
 
     // MARK: - Toolbar actions
