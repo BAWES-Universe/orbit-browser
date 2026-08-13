@@ -41,6 +41,37 @@ enum MainMenuBuilder {
             action: #selector(BrowserWindowController.newTab(_:)),
             keyEquivalent: "t"
         )
+        fileMenu.addItem(
+            withTitle: "Close Tab",
+            action: #selector(BrowserWindowController.closeTab(_:)),
+            keyEquivalent: "w"
+        )
+        fileMenu.addItem(
+            withTitle: "Focus Address Bar",
+            action: #selector(BrowserWindowController.focusAddressBar(_:)),
+            keyEquivalent: "l"
+        )
+        fileMenu.addItem(.separator())
+        fileMenu.addItem(
+            withTitle: "Next Tab",
+            action: #selector(BrowserWindowController.nextTab(_:)),
+            keyEquivalent: "\u{5D}"
+        ).keyEquivalentModifierMask = [.command, .shift]
+        fileMenu.addItem(
+            withTitle: "Previous Tab",
+            action: #selector(BrowserWindowController.previousTab(_:)),
+            keyEquivalent: "\u{5B}"
+        ).keyEquivalentModifierMask = [.command, .shift]
+        fileMenu.addItem(.separator())
+        for index in 1...9 {
+            let item = fileMenu.addItem(
+                withTitle: "Tab \(index)",
+                action: #selector(BrowserWindowController.selectTabNumber(_:)),
+                keyEquivalent: "\(index)"
+            )
+            item.tag = index - 1
+            item.keyEquivalentModifierMask = [.command]
+        }
         fileMenuItem.submenu = fileMenu
 
         // Edit menu — enables Cmd+C/V/X/A in the address bar.
@@ -92,7 +123,7 @@ enum MainMenuBuilder {
         windowMenu.addItem(
             withTitle: "Close Window",
             action: #selector(NSWindow.performClose(_:)),
-            keyEquivalent: "w"
+            keyEquivalent: "W"
         )
         windowMenuItem.submenu = windowMenu
         NSApp.windowsMenu = windowMenu

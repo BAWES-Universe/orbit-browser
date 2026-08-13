@@ -1,26 +1,25 @@
 import AppKit
 import WebKit
 
-/// The browser chrome surface: tab strip + navigation toolbar + web view
-/// host. Owns the tab model and routes toolbar actions to the selected tab.
+/// The browser chrome surface (Q-ORBIT-02): unified glass toolbar with
+/// floating pill tabs + address bar + actions, native start page, and the
+/// web view host. Owns the tab model and routes chrome actions to the
+/// selected tab.
 @MainActor
 final class BrowserWindowController: NSWindowController {
 
-    /// Default start page (Q1). A bundled start page via WKURLSchemeHandler
-    /// is a later iteration.
+    /// Fallback start URL for tabs that leave the start page (not used for
+    /// new tabs — those get the native start page).
     static let startPage = URL(string: "https://example.com")!
 
     private let bridge = Bridge()
     private var tabs: [BrowserTab] = []
     private var selectedIndex = 0
 
-    // Chrome views
-    private let tabBarView = TabBarView()
-    private let addressField = NSTextField(string: "")
-    private let backButton = NSButton()
-    private let forwardButton = NSButton()
-    private let reloadButton = NSButton()
+    // Chrome
+    private let toolbar = ToolbarView()
     private let webViewHost = NSView()
+    private let startPageView = StartPageView()
 
     private var selectedTab: BrowserTab? {
         tabs.indices.contains(selectedIndex) ? tabs[selectedIndex] : nil
@@ -31,20 +30,24 @@ final class BrowserWindowController: NSWindowController {
     init() {
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 1200, height: 800),
-            styleMask: [.titled, .closable, .miniaturizable, .resizable],
+            styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
             backing: .buffered,
             defer: false
         )
         window.title = "Orbit Browser"
+        window.titlebarAppearsTransparent = true
+        window.titleVisibility = .hidden
+        window.appearance = NSAppearance(named: .darkAqua)
+        window.backgroundColor = Theme.background
         window.setFrameAutosaveName("OrbitBrowserMainWindow")
         window.center()
 
         super.init(window: window)
 
         buildChrome()
-        addTab(loading: Self.startPage)
+        newTab(nil)
         updateChrome()
-        window.makeFirstResponder(addressField)
+        startPageView.focusField()
     }
 
     @available(*, unavailable)
@@ -57,78 +60,85 @@ final class BrowserWindowController: NSWindowController {
     private func buildChrome() {
         guard let contentView = window?.contentView else { return }
 
-        tabBarView.onSelectTab = { [weak self] index in self?.selectTab(at: index) }
-        tabBarView.onNewTab = { [weak self] in self?.newTab(nil) }
+        toolbar.tabStrip.onSelect = { [weak self] index in self?.selectTab(at: index) }
+        toolbar.tabStrip.onNewTab = { [weak self] in self?.newTab(nil) }
+        toolbar.addressBar.onNavigate = { [weak self] raw in self?.navigate(raw) }
+        toolbar.onBack = { [weak self] in self?.selectedTab?.webView.goBack() }
+        toolbar.onForward = { [weak self] in self?.selectedTab?.webView.goForward() }
+        toolbar.onReload = { [weak self] in self?.selectedTab?.webView.reload() }
 
-        let toolbar = NSStackView()
-        toolbar.orientation = .horizontal
-        toolbar.spacing = 6
-        toolbar.edgeInsets = NSEdgeInsets(top: 7, left: 8, bottom: 7, right: 8)
+        startPageView.onNavigate = { [weak self] raw in self?.navigate(raw) }
+
         toolbar.translatesAutoresizingMaskIntoConstraints = false
+        webViewHost.translatesAutoresizingMaskIntoConstraints = false
+        startPageView.translatesAutoresizingMaskIntoConstraints = false
 
-        configure(backButton, symbol: "chevron.backward", action: #selector(goBack(_:)), toolTip: "Back")
-        configure(forwardButton, symbol: "chevron.forward", action: #selector(goForward(_:)), toolTip: "Forward")
-        configure(reloadButton, symbol: "arrow.clockwise", action: #selector(reload(_:)), toolTip: "Reload")
-
-        addressField.placeholderString = "Enter address"
-        addressField.font = .systemFont(ofSize: 13)
-        addressField.target = self
-        addressField.action = #selector(navigate(_:))
-        addressField.setContentHuggingPriority(.defaultLow, for: .horizontal)
-        addressField.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-
-        toolbar.addArrangedSubview(backButton)
-        toolbar.addArrangedSubview(forwardButton)
-        toolbar.addArrangedSubview(reloadButton)
-        toolbar.addArrangedSubview(addressField)
-
-        contentView.addSubview(tabBarView)
         contentView.addSubview(toolbar)
         contentView.addSubview(webViewHost)
-
-        tabBarView.translatesAutoresizingMaskIntoConstraints = false
-        webViewHost.translatesAutoresizingMaskIntoConstraints = false
+        webViewHost.addSubview(startPageView)
 
         NSLayoutConstraint.activate([
-            tabBarView.topAnchor.constraint(equalTo: contentView.topAnchor),
-            tabBarView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
-            tabBarView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            tabBarView.heightAnchor.constraint(equalToConstant: 34),
-
-            toolbar.topAnchor.constraint(equalTo: tabBarView.bottomAnchor),
+            toolbar.topAnchor.constraint(equalTo: contentView.topAnchor),
             toolbar.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             toolbar.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
-            toolbar.heightAnchor.constraint(equalToConstant: 38),
+            toolbar.heightAnchor.constraint(equalToConstant: Theme.stripHeight),
 
             webViewHost.topAnchor.constraint(equalTo: toolbar.bottomAnchor),
             webViewHost.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
             webViewHost.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
             webViewHost.bottomAnchor.constraint(equalTo: contentView.bottomAnchor),
-        ])
-    }
 
-    private func configure(_ button: NSButton, symbol: String, action: Selector, toolTip: String) {
-        button.image = NSImage(systemSymbolName: symbol, accessibilityDescription: toolTip)
-        button.bezelStyle = .rounded
-        button.target = self
-        button.action = action
-        button.toolTip = toolTip
+            startPageView.topAnchor.constraint(equalTo: webViewHost.topAnchor),
+            startPageView.leadingAnchor.constraint(equalTo: webViewHost.leadingAnchor),
+            startPageView.trailingAnchor.constraint(equalTo: webViewHost.trailingAnchor),
+            startPageView.bottomAnchor.constraint(equalTo: webViewHost.bottomAnchor),
+        ])
     }
 
     // MARK: - Tab management
 
     @objc func newTab(_ sender: Any?) {
-        addTab(loading: Self.startPage)
+        addTab(loading: nil)
+    }
+
+    @objc func closeTab(_ sender: Any?) {
+        guard !tabs.isEmpty else { return }
+        tabs.remove(at: selectedIndex)
+        if tabs.isEmpty {
+            addTab(loading: nil)
+        } else {
+            selectedIndex = min(selectedIndex, tabs.count - 1)
+            attachWebView(tabs[selectedIndex].webView)
+        }
+        updateChrome()
+    }
+
+    @objc func nextTab(_ sender: Any?) {
+        guard !tabs.isEmpty else { return }
+        selectTab(at: (selectedIndex + 1) % tabs.count)
+    }
+
+    @objc func previousTab(_ sender: Any?) {
+        guard !tabs.isEmpty else { return }
+        selectTab(at: (selectedIndex - 1 + tabs.count) % tabs.count)
+    }
+
+    @objc func selectTabNumber(_ sender: NSMenuItem) {
+        let index = sender.tag
+        guard index >= 0, index < tabs.count else { return }
+        selectTab(at: index)
     }
 
     @discardableResult
-    private func addTab(loading url: URL) -> BrowserTab {
+    private func addTab(loading url: URL?) -> BrowserTab {
         let tab = BrowserTab(bridge: bridge)
         tab.onNavigationUpdate = { [weak self] in self?.updateChrome() }
         tabs.append(tab)
         selectedIndex = tabs.count - 1
         attachWebView(tab.webView)
-        tab.load(url)
+        if let url {
+            tab.load(url)
+        }
         updateChrome()
         return tab
     }
@@ -141,11 +151,11 @@ final class BrowserWindowController: NSWindowController {
     }
 
     private func attachWebView(_ webView: WKWebView) {
-        for subview in webViewHost.subviews {
+        for subview in webViewHost.subviews where subview !== startPageView {
             subview.removeFromSuperview()
         }
         webView.translatesAutoresizingMaskIntoConstraints = false
-        webViewHost.addSubview(webView)
+        webViewHost.addSubview(webView, positioned: .below, relativeTo: startPageView)
         NSLayoutConstraint.activate([
             webView.topAnchor.constraint(equalTo: webViewHost.topAnchor),
             webView.leadingAnchor.constraint(equalTo: webViewHost.leadingAnchor),
@@ -154,31 +164,33 @@ final class BrowserWindowController: NSWindowController {
         ])
     }
 
+    // MARK: - Chrome state
+
     private func updateChrome() {
         guard let tab = selectedTab else { return }
-        addressField.stringValue = tab.webView.url?.absoluteString ?? ""
-        backButton.isEnabled = tab.webView.canGoBack
-        forwardButton.isEnabled = tab.webView.canGoForward
-        tabBarView.update(tabs: tabs, selectedIndex: selectedIndex)
+
+        startPageView.isHidden = !tab.showsStartPage
+
+        let urlString = tab.showsStartPage ? "" : (tab.webView.url?.absoluteString ?? "")
+        toolbar.addressBar.setURL(urlString)
+        toolbar.setNavigation(canGoBack: tab.webView.canGoBack, canGoForward: tab.webView.canGoForward)
+        toolbar.updateTabs(titles: tabs.map(\.title), selectedIndex: selectedIndex)
+
+        if tab.showsStartPage {
+            startPageView.focusFieldIfNeeded()
+        }
     }
 
     // MARK: - Toolbar actions
 
-    @objc private func goBack(_ sender: Any?) {
-        selectedTab?.webView.goBack()
+    @objc func focusAddressBar(_ sender: Any?) {
+        toolbar.addressBar.focusField()
     }
 
-    @objc private func goForward(_ sender: Any?) {
-        selectedTab?.webView.goForward()
-    }
-
-    @objc private func reload(_ sender: Any?) {
-        selectedTab?.webView.reload()
-    }
-
-    @objc private func navigate(_ sender: NSTextField) {
-        guard let url = Self.makeURL(from: sender.stringValue) else { return }
+    private func navigate(_ raw: String) {
+        guard let url = Self.makeURL(from: raw) else { return }
         selectedTab?.load(url)
+        updateChrome()
     }
 
     /// Accepts a bare host (scheme-less) and prefixes https://.
