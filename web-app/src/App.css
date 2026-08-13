@@ -71,6 +71,77 @@ html, body, #root {
   cursor: pointer;
 }
 
+/* ── Tab strip (T-003) ─────────────────── */
+.tab-strip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow-x: auto;
+  padding: 2px 0;
+  max-width: 460px;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--muted);
+  cursor: pointer;
+  white-space: nowrap;
+  max-width: 160px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.tab:hover { background: var(--panel-2); color: var(--text); }
+
+.tab.active {
+  background: var(--panel-2);
+  color: var(--text);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.tab-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tab-close {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 10px;
+  cursor: pointer;
+  padding: 2px;
+  border-radius: 4px;
+  line-height: 1;
+}
+
+.tab-close:hover { color: var(--text); background: rgba(255,255,255,0.08); }
+
+.tab-new {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 2px 8px;
+  border-radius: 8px;
+}
+
+.tab-new:hover { color: var(--text); background: var(--panel-2); }
+
+.tab-url {
+  font-size: 13px;
+  color: var(--accent);
+  margin-bottom: 8px;
+  font-family: monospace;
+}
+
 .current-url {
   font-size: 11px;
   color: var(--muted);
