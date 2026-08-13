@@ -1,9 +1,12 @@
 ---
 id: T-004
 title: Init ticket queue as git repo, remote to fleet repo (durability)
-state: open
+state: claimed
 priority: P1
-owner: unassigned
+owner: brick
+claimer: brick
+lease_expires: 2026-08-13T11:19:14Z
+claimed_at: 2026-08-13T07:19:14Z
 created: 2026-08-13
 path: orbit-browser
 ---
