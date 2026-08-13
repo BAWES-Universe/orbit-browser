@@ -1,0 +1,44 @@
+# Fastlane — iOS shell release automation (Orbit Browser)
+# Leading-providers pattern: automated build → test → sign → release.
+# Fastlane is the standard Apple deployment automation (app-store / TestFlight / ad-hoc).
+
+default_platform(:ios)
+
+platform :ios do
+  desc "Build + test the iOS shell (WKWebView wrapper)"
+  lane :build_test do
+    # Build the web-app first (the actual product)
+    sh("cd ../../web-app && npm ci && npm run build")
+    # Build the Xcode shell (WKWebView wrapper around the built web app)
+    gym(
+      scheme: "OrbitBrowser",
+      configuration: "Debug",
+      clean: true,
+      export_method: "development"
+    )
+  end
+
+  desc "Sign + ship to TestFlight (release candidate)"
+  lane :release_testflight do
+    # Requires: fastlane match certs + App Store Connect API key
+    match(type: "appstore", readonly: true)
+    gym(
+      scheme: "OrbitBrowser",
+      configuration: "Release",
+      clean: true,
+      export_method: "appstore"
+    )
+    upload_to_testflight(skip_waiting_for_build_processing: true)
+  end
+
+  desc "Submit to App Store (final release)"
+  lane :release_appstore do
+    match(type: "appstore", readonly: true)
+    gym(
+      scheme: "OrbitBrowser",
+      configuration: "Release",
+      export_method: "appstore"
+    )
+    deliver(force: true, skip_metadata: true, skip_screenshots: true, skip_app_version_update: true)
+  end
+end

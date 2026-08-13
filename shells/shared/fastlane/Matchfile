@@ -1,0 +1,13 @@
+# Fastlane match — signing secrets storage
+# NEVER commit real certs/passwords here. This file is the config reference.
+# Docs: https://docs.fastlane.tools/actions/match/
+
+git_url("git@github.com:BAWES-Universe/orbit-browser-certificates.git")
+storage_mode("git")
+type("appstore")
+app_identifier(["com.bawes.orbitbrowser"])
+
+# After cloning the private certs repo, run:
+#   fastlane match init
+#   fastlane match appstore
+# to generate the provisioning profiles used by the release lanes.

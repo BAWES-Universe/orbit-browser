@@ -1,0 +1,29 @@
+# Fastlane — macOS shell release automation (Orbit Browser)
+
+default_platform(:macos)
+
+platform :macos do
+  desc "Build + test the macOS shell"
+  lane :build_test do
+    sh("cd ../../web-app && npm ci && npm run build")
+    gym(
+      scheme: "OrbitBrowser",
+      configuration: "Debug",
+      clean: true,
+      export_method: "development"
+    )
+  end
+
+  desc "Build signed release DMG (distributable to friends/family)"
+  lane :release_dmg do
+    match(type: "development", readonly: true)
+    gym(
+      scheme: "OrbitBrowser",
+      configuration: "Release",
+      clean: true,
+      export_method: "development"
+    )
+    # Package as DMG for easy distribution (the friend-package installer path)
+    sh("hdiutil create -volname 'Orbit Browser' -srcfolder build -ov -format UDZO OrbitBrowser.dmg")
+  end
+end
