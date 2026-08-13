@@ -36,9 +36,9 @@ final class ToolbarView: NSView {
 
     private func setup() {
         wantsLayer = true
-        // Opaque enough that page content never bleeds through the chrome,
-        // with a hairline separating chrome from content.
-        layer?.backgroundColor = NSColor(calibratedWhite: 0.02, alpha: 0.78).cgColor
+        // Opaque background: translucent ancestor layer backgrounds were
+        // breaking descendant compositing in this window's layer tree.
+        layer?.backgroundColor = NSColor(calibratedWhite: 0.02, alpha: 1.0).cgColor
 
         let hairline = NSView()
         hairline.wantsLayer = true
@@ -46,24 +46,33 @@ final class ToolbarView: NSView {
         hairline.translatesAutoresizingMaskIntoConstraints = false
         addSubview(hairline)
 
-        let stack = NSStackView()
-        stack.orientation = .horizontal
-        stack.spacing = 8
-        stack.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(stack)
+        // Left group: traffic-light spacer + floating pill tabs.
+        let leftStack = NSStackView()
+        leftStack.orientation = .horizontal
+        leftStack.spacing = 8
+        leftStack.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(leftStack)
 
         trafficSpacer.translatesAutoresizingMaskIntoConstraints = false
         trafficSpacer.widthAnchor.constraint(equalToConstant: Theme.trafficLightInset).isActive = true
-        stack.addArrangedSubview(trafficSpacer)
+        leftStack.addArrangedSubview(trafficSpacer)
 
-        // Tabs stretch; address bar keeps a comfortable width.
+        // Tabs stretch up to a cap so they never crush the address bar.
         tabStrip.setContentHuggingPriority(.defaultLow, for: .horizontal)
         tabStrip.setContentCompressionResistancePriority(.defaultLow, for: .horizontal)
-        stack.addArrangedSubview(tabStrip)
+        leftStack.addArrangedSubview(tabStrip)
 
-        addressBar.widthAnchor.constraint(equalToConstant: 400).isActive = true
+        // Right group: address bar + nav + actions. Everything that must
+        // composite lives inside a stack in this window.
+        let rightStack = NSStackView()
+        rightStack.orientation = .horizontal
+        rightStack.spacing = 8
+        rightStack.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(rightStack)
+
+        addressBar.translatesAutoresizingMaskIntoConstraints = false
+        addressBar.widthAnchor.constraint(equalToConstant: 420).isActive = true
         addressBar.setContentHuggingPriority(.defaultHigh, for: .horizontal)
-        stack.addArrangedSubview(addressBar)
 
         configureNavButton(backButton, symbol: "chevron.backward", tooltip: "Back")
         configureNavButton(forwardButton, symbol: "chevron.forward", tooltip: "Forward")
@@ -71,24 +80,33 @@ final class ToolbarView: NSView {
         let navStack = NSStackView(views: [backButton, forwardButton, reloadButton])
         navStack.orientation = .horizontal
         navStack.spacing = 2
-        stack.addArrangedSubview(navStack)
+
+        // Conventional order: nav chevrons left of the address bar.
+        rightStack.addArrangedSubview(navStack)
+        rightStack.addArrangedSubview(addressBar)
 
         configureNavButton(shieldButton, symbol: "shield.fill", tooltip: "Rules: pending (Q-ORBIT-07)")
         shieldButton.contentTintColor = Theme.bananaGold.withAlphaComponent(0.85)
-        stack.addArrangedSubview(shieldButton)
+        rightStack.addArrangedSubview(shieldButton)
 
         configureNavButton(aiButton, symbol: "sparkles", tooltip: "Orbit AI: pending (Q-ORBIT-06)")
         aiButton.contentTintColor = Theme.violet
-        stack.addArrangedSubview(aiButton)
+        rightStack.addArrangedSubview(aiButton)
 
         makeAvatar()
-        stack.addArrangedSubview(avatarView)
+        rightStack.addArrangedSubview(avatarView)
 
         NSLayoutConstraint.activate([
-            stack.topAnchor.constraint(equalTo: topAnchor, constant: 6),
-            stack.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -6),
-            stack.leadingAnchor.constraint(equalTo: leadingAnchor),
-            stack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -10),
+            leftStack.topAnchor.constraint(equalTo: topAnchor, constant: 6),
+            leftStack.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -6),
+            leftStack.leadingAnchor.constraint(equalTo: leadingAnchor),
+
+            rightStack.topAnchor.constraint(equalTo: topAnchor, constant: 6),
+            rightStack.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -6),
+            rightStack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -10),
+
+            leftStack.trailingAnchor.constraint(lessThanOrEqualTo: rightStack.leadingAnchor, constant: -8),
+            tabStrip.widthAnchor.constraint(lessThanOrEqualToConstant: 520),
 
             hairline.leadingAnchor.constraint(equalTo: leadingAnchor),
             hairline.trailingAnchor.constraint(equalTo: trailingAnchor),

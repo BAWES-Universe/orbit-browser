@@ -65,8 +65,16 @@ final class BrowserWindowController: NSWindowController {
     private func buildChrome() {
         guard let contentView = window?.contentView else { return }
 
+        // Force the whole window into the layer-backed rendering path.
+        // Mixing layer-backed and non-layer-backed views in a non-layer-backed
+        // contentView selectively breaks compositing (the address bar never
+        // appeared on screen while its siblings did).
+        contentView.wantsLayer = true
+
         toolbar.tabStrip.onSelect = { [weak self] index in self?.selectTab(at: index) }
         toolbar.tabStrip.onNewTab = { [weak self] in self?.newTab(nil) }
+        toolbar.tabStrip.onClose = { [weak self] index in self?.closeTab(at: index) }
+        toolbar.tabStrip.onReorder = { [weak self] from, to in self?.moveTab(from: from, to: to) }
         toolbar.addressBar.onNavigate = { [weak self] raw in self?.navigate(raw) }
         toolbar.onBack = { [weak self] in self?.selectedTab?.webView.goBack() }
         toolbar.onForward = { [weak self] in self?.selectedTab?.webView.goForward() }
@@ -108,13 +116,39 @@ final class BrowserWindowController: NSWindowController {
     }
 
     @objc func closeTab(_ sender: Any?) {
-        guard !tabs.isEmpty else { return }
-        tabs.remove(at: selectedIndex)
+        closeTab(at: selectedIndex)
+    }
+
+    /// Closes the tab at `index`, keeping selection sane and never leaving
+    /// the window tab-less.
+    func closeTab(at index: Int) {
+        guard tabs.indices.contains(index) else { return }
+        let wasSelected = index == selectedIndex
+        tabs.remove(at: index)
         if tabs.isEmpty {
             addTab(loading: nil)
         } else {
-            selectedIndex = min(selectedIndex, tabs.count - 1)
-            attachWebView(tabs[selectedIndex].webView)
+            if wasSelected {
+                selectedIndex = min(index, tabs.count - 1)
+                attachWebView(tabs[selectedIndex].webView)
+            } else if index < selectedIndex {
+                selectedIndex -= 1
+            }
+        }
+        updateChrome()
+    }
+
+    /// Reorders tabs (drag in the tab strip); selection follows the moved tab.
+    func moveTab(from: Int, to: Int) {
+        guard tabs.indices.contains(from), tabs.indices.contains(to), from != to else { return }
+        let tab = tabs.remove(at: from)
+        tabs.insert(tab, at: to)
+        if selectedIndex == from {
+            selectedIndex = to
+        } else if from < selectedIndex, to >= selectedIndex {
+            selectedIndex -= 1
+        } else if from > selectedIndex, to <= selectedIndex {
+            selectedIndex += 1
         }
         updateChrome()
     }

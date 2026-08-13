@@ -14,7 +14,7 @@ final class StartPageView: NSView {
     /// Called when a quick-link tile is clicked (URL to load).
     var onOpenURL: ((URL) -> Void)?
 
-    private let fieldContainer = NSView()
+    private let fieldContainer = GlassPillView()
     private let field = NSTextField()
     private var orbs: [(layer: CALayer, basePosition: CGPoint, radius: CGFloat, duration: CFTimeInterval)] = []
     private var orbsAnimated = false
@@ -85,21 +85,23 @@ final class StartPageView: NSView {
         tagline.translatesAutoresizingMaskIntoConstraints = false
         addSubview(tagline)
 
-        // Glass search field.
+        // Glass search field — drawn explicitly (see GlassPillView) so it
+        // actually composites on screen.
         fieldContainer.wantsLayer = true
-        fieldContainer.layer?.cornerRadius = Theme.pillRadius
-        fieldContainer.layer?.backgroundColor = Theme.surfaceGlass.cgColor
-        fieldContainer.layer?.borderWidth = 1
-        fieldContainer.layer?.borderColor = Theme.hairline.cgColor
+        fieldContainer.layer?.masksToBounds = true
         fieldContainer.translatesAutoresizingMaskIntoConstraints = false
         addSubview(fieldContainer)
 
         field.isBordered = false
         field.drawsBackground = false
+        field.wantsLayer = true
         field.font = .systemFont(ofSize: 15)
         field.textColor = Theme.textPrimary
-        field.placeholderString = "Search or enter address"
         field.focusRingType = .none
+        field.placeholderAttributedString = NSAttributedString(
+            string: "Search the universe — type a URL or ask anything",
+            attributes: [.foregroundColor: NSColor(calibratedWhite: 0.78, alpha: 1)]
+        )
         field.target = self
         field.action = #selector(submit(_:))
         field.translatesAutoresizingMaskIntoConstraints = false
@@ -175,20 +177,20 @@ final class StartPageView: NSView {
         tile.isBordered = false
         tile.wantsLayer = true
         tile.layer?.cornerRadius = Theme.cornerRadius
-        tile.layer?.backgroundColor = Theme.surfaceGlass.cgColor
+        tile.layer?.backgroundColor = NSColor(calibratedWhite: 1, alpha: 0.12).cgColor
         tile.layer?.borderWidth = 1
-        tile.layer?.borderColor = Theme.hairline.cgColor
+        tile.layer?.borderColor = NSColor(calibratedWhite: 1, alpha: 0.20).cgColor
         tile.bezelStyle = .regularSquare
         tile.imagePosition = .imageAbove
         tile.image = NSImage(systemSymbolName: symbol, accessibilityDescription: title)
-        tile.image?.size = NSSize(width: 20, height: 20)
-        tile.image?.isTemplate = false
+        tile.image?.size = NSSize(width: 22, height: 22)
+        tile.image?.isTemplate = true
         tile.contentTintColor = Theme.bananaGold
         tile.attributedTitle = NSAttributedString(
             string: title,
             attributes: [
                 .font: NSFont.systemFont(ofSize: 12, weight: .medium),
-                .foregroundColor: Theme.textSecondary,
+                .foregroundColor: Theme.textPrimary,
             ]
         )
         tile.toolTip = title
@@ -254,5 +256,25 @@ final class StartPageView: NSView {
     func focusFieldIfNeeded() {
         guard window?.firstResponder !== field, field.currentEditor() == nil else { return }
         window?.makeFirstResponder(field)
+    }
+}
+
+/// Rounded glass pill drawn explicitly — layer backgrounds on plain NSView
+/// containers were not compositing in this window hierarchy.
+@MainActor
+final class GlassPillView: NSView {
+    override func setFrameSize(_ newSize: NSSize) {
+        super.setFrameSize(newSize)
+        needsDisplay = true
+    }
+
+    override func draw(_ dirtyRect: NSRect) {
+        let path = NSBezierPath(roundedRect: bounds.insetBy(dx: 0.5, dy: 0.5),
+                                xRadius: bounds.height / 2, yRadius: bounds.height / 2)
+        NSColor(calibratedWhite: 1, alpha: 0.16).setFill()
+        path.fill()
+        NSColor(calibratedWhite: 1, alpha: 0.28).setStroke()
+        path.lineWidth = 1
+        path.stroke()
     }
 }
