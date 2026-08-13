@@ -1,9 +1,12 @@
 ---
 id: T-003
 title: Build tab management (open/close/switch) — regression-tested
-state: open
+state: claimed
 priority: P1
-owner: unassigned
+owner: brick
+claimer: brick
+lease_expires: 2026-08-13T14:35:28Z
+claimed_at: 2026-08-13T10:35:28Z
 created: 2026-08-13
 path: orbit-browser
 ---

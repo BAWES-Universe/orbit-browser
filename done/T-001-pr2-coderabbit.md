@@ -1,12 +1,9 @@
 ---
 id: T-001
 title: Address PR #2 CodeRabbit findings (3 fixes)
-state: claimed
+state: done
 priority: P0
 owner: zero
-claimer: zero
-lease_expires: 2026-08-13T10:27:37.386810Z
-claimed_at: 2026-08-13T06:27:37.386911Z
 created: 2026-08-13
 path: orbit-browser
 ---
@@ -29,4 +26,6 @@ Khalid flagged them. Must be answered through the process, never ignored.
 - Route through Zero (has push access) unless worker with access claims it
 
 ## Verification
-merged + QA + 0 TS (per fleet bar)
+PR #2 MERGED to main (94e2d60, verified ON main by brick via ancestry check
+2026-08-13T10:35Z). CodeRabbit addressed (b65bc4a per merge message), CI green.
+Fleet bar: merged + QA + 0 TS — satisfied.

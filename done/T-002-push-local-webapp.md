@@ -1,12 +1,9 @@
 ---
 id: T-002
 title: Push local web-app work (URL bar + E2E suite) into repo as PR
-state: claimed
+state: done
 priority: P0
 owner: zero
-claimer: zero
-lease_expires: 2026-08-13T10:27:37.386810Z
-claimed_at: 2026-08-13T06:27:37.386911Z
 created: 2026-08-13
 path: orbit-browser
 ---
@@ -28,4 +25,6 @@ The divergence must end: local work lands as a PR through the gate.
 - Khalid sees the URL bar working in a live build (demo ≠ stale)
 
 ## Verification
-merged + QA + 0 TS + E2E suite green
+PR #3 MERGED to main (09a91b0, verified ON main by brick via ancestry check
+2026-08-13T10:35Z). URL bar + workspace shell + 7 E2E tests landed. Fleet bar:
+merged + QA + 0 TS + E2E green — satisfied.
