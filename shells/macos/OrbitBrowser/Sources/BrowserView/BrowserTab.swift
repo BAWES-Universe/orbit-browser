@@ -9,9 +9,21 @@ final class BrowserTab: NSObject, WKNavigationDelegate, WKUIDelegate {
 
     let webView: WKWebView
 
+    /// Q-ORBIT-02: a tab starts on the native start page until the user
+    /// navigates somewhere (then the web view takes over).
+    var showsStartPage = true
+
     /// Called whenever committed navigation state changes so the chrome
     /// (address bar, back/forward enabled state, tab titles) can refresh.
     var onNavigationUpdate: (() -> Void)?
+
+    /// Display title for the tab strip.
+    var title: String {
+        if let pageTitle = webView.title, !pageTitle.isEmpty {
+            return pageTitle
+        }
+        return showsStartPage ? "New Tab" : "Untitled"
+    }
 
     init(bridge: Bridge, frame: NSRect = .zero) {
         let configuration = WKWebViewConfiguration()
@@ -25,9 +37,11 @@ final class BrowserTab: NSObject, WKNavigationDelegate, WKUIDelegate {
         webView.uiDelegate = self
         webView.allowsBackForwardNavigationGestures = true
         webView.allowsMagnification = true
+        webView.appearance = NSAppearance(named: .darkAqua)
     }
 
     func load(_ url: URL) {
+        showsStartPage = false
         webView.load(URLRequest(url: url))
     }
 

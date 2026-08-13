@@ -4,8 +4,8 @@ Thin WebKit wrapper hosting the Orbit web-app for macOS. **Q-ORBIT-01: native
 shell landed** — builds and assembles with the Command Line Tools toolchain
 only (no Xcode, no xcodebuild).
 
-**Status:** Q1 chrome foundation. Compiles clean, bundles into a signed
-`OrbitBrowser.app`. GUI launch is pending manual testing (khalid).
+**Status:** Q2 chrome redesign landed. Compiles clean, bundles into a signed
+`OrbitBrowser.app`. GUI launch verified live (khalid).
 
 ## Layout
 
@@ -16,21 +16,28 @@ macos/
     Info.plist             app bundle plist (com.bawes.orbitbrowser)
     Sources/
       App/                 NSApplication entry point + programmatic main menu
-      BrowserView/         WKWebView wrapper, window controller, tab strip
+      BrowserView/         WKWebView wrapper, window controller
+      Theme.swift          design tokens (colors, radii, metrics)
+      Chrome/              TabStrip, AddressBar, Toolbar, StartPage (glass
+                           chrome + native start page)
       Bridge/              shell↔web bridge stub (window.orbitBridge.post)
   scripts/
     build-app.sh           build → assemble → lint → ad-hoc sign → verify
   build/                   assembled OrbitBrowser.app (gitignored)
 ```
 
-## What the shell does (Q1)
+## What the shell does
 
-- One browser window: tab strip (new tab / select), toolbar (back / forward /
-  reload), address bar (Enter navigates; scheme-less input gets `https://`).
-- Each tab owns its own `WKWebView`. Default start page: `https://example.com`.
-- Bridge stub: every web view gets a `window.orbitBridge.post(payload)` preload
-  (WKUserScript); messages are logged by the native side. Log-only for Q1 —
-  the seam where rules-enforcement UI / AI assist / preloads / identity hook in.
+- Custom glass window (hidden titlebar, dark-first): floating pill tab strip,
+  unified toolbar with glass address bar, back/forward/reload, and pending
+  placeholders (shield = rules, sparkles = AI, avatar = identity).
+- Native start page on new tab: dark gradient, drifting indigo/violet/gold
+  orbs, gradient "Orbit" wordmark, glass search field + quick-link tiles.
+- Tabs: ⌘T new, ⌘W close, ⌘1–9 switch, ⇧⌘]/[ next/prev; ⌘L focuses the
+  address bar. Scheme-less input gets `https://`.
+- Each tab owns its own `WKWebView`. Bridge stub: `window.orbitBridge.post`
+  preload logs to the native side — the seam where rules-enforcement UI /
+  AI assist / preloads / identity hook in (Q-ORBIT-06/07).
 - No engine, no network stack, no rendering core — thin shell per
   `docs/build-spec.md`.
 
