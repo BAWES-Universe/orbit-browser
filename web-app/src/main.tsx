@@ -1,14 +1,11 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import App from './App';
-import { registerSW } from 'virtual:pwa-register';
-import './index.css';
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import './index.css'
+import './service-worker'
+import App from './App.tsx'
 
-// Workbox service worker registration (vite-plugin-pwa, autoUpdate).
-registerSW({ immediate: true });
-
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
     <App />
-  </React.StrictMode>,
-);
+  </StrictMode>,
+)

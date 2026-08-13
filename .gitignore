@@ -13,6 +13,11 @@ out/
 # PWA / Workbox generated
 web-app/dev-dist/
 
+# Playwright
+web-app/test-results/
+web-app/playwright-report/
+web-app/.last-run.json
+
 # Env / secrets
 .env
 .env.*
