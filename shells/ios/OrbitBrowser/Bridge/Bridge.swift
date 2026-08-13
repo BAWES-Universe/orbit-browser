@@ -8,11 +8,7 @@ import WebKit
 /// and logs anything the page posts. This is the seam where rules-enforcement
 /// UI, AI assist, preloads and identity will hook in — deliberately log-only
 /// for now, per build-spec: "thin shell only".
-///
-/// Note: intentionally NOT @MainActor. The macOS twin is @MainActor because it
-/// is created from a MainActor window controller; on iOS the bridge is created
-/// from SwiftUI view init (nonisolated in Swift 5 mode), and WKWebView
-/// callbacks already arrive on the main thread.
+@MainActor
 final class Bridge: NSObject, WKScriptMessageHandler {
 
     static let handlerName = "orbitBridge"
