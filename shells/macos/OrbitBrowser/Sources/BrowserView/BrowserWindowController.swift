@@ -25,6 +25,11 @@ final class BrowserWindowController: NSWindowController {
         tabs.indices.contains(selectedIndex) ? tabs[selectedIndex] : nil
     }
 
+    // MARK: - Selftest hooks (--selftest mode)
+
+    var tabCount: Int { tabs.count }
+    var currentTabShowsStartPage: Bool { selectedTab?.showsStartPage ?? false }
+
     // MARK: - Lifecycle
 
     init() {
@@ -68,6 +73,7 @@ final class BrowserWindowController: NSWindowController {
         toolbar.onReload = { [weak self] in self?.selectedTab?.webView.reload() }
 
         startPageView.onNavigate = { [weak self] raw in self?.navigate(raw) }
+        startPageView.onOpenURL = { [weak self] url in self?.navigate(url.absoluteString) }
 
         toolbar.translatesAutoresizingMaskIntoConstraints = false
         webViewHost.translatesAutoresizingMaskIntoConstraints = false
@@ -202,7 +208,7 @@ final class BrowserWindowController: NSWindowController {
         toolbar.addressBar.focusField()
     }
 
-    private func navigate(_ raw: String) {
+    func navigate(_ raw: String) {
         guard let url = Self.makeURL(from: raw) else { return }
         selectedTab?.load(url)
         updateChrome()

@@ -11,6 +11,9 @@ final class StartPageView: NSView {
     /// Called with the raw text when the user presses Return in the field.
     var onNavigate: ((String) -> Void)?
 
+    /// Called when a quick-link tile is clicked (URL to load).
+    var onOpenURL: ((URL) -> Void)?
+
     private let fieldContainer = NSView()
     private let field = NSTextField()
     private var orbs: [(layer: CALayer, basePosition: CGPoint, radius: CGFloat, duration: CFTimeInterval)] = []
@@ -63,10 +66,11 @@ final class StartPageView: NSView {
         base.endPoint = CGPoint(x: 0.5, y: 1)
         layer?.addSublayer(base)
 
-        // Floating orbs (soft radial feel via big-radius layers at low alpha).
-        addOrb(color: Theme.indigo, radius: 360, position: CGPoint(x: 0.16, y: 0.28), duration: 22)
-        addOrb(color: Theme.violet, radius: 300, position: CGPoint(x: 0.84, y: 0.22), duration: 27)
-        addOrb(color: Theme.bananaGold, radius: 220, position: CGPoint(x: 0.62, y: 0.78), duration: 31)
+        // Floating orbs — low alpha and spread apart so overlapping seams
+        // don't read as visible facets/grid lines in the render.
+        addOrb(color: Theme.indigo, radius: 380, position: CGPoint(x: 0.10, y: 0.30), duration: 22)
+        addOrb(color: Theme.violet, radius: 320, position: CGPoint(x: 0.90, y: 0.18), duration: 27)
+        addOrb(color: Theme.bananaGold, radius: 260, position: CGPoint(x: 0.68, y: 0.80), duration: 31)
 
         // Wordmark with gradient fill.
         let wordmark = NSImageView()
@@ -101,12 +105,12 @@ final class StartPageView: NSView {
         field.translatesAutoresizingMaskIntoConstraints = false
         fieldContainer.addSubview(field)
 
-        // Quick-link tiles (placeholders for the Universe surfaces).
-        let tiles = [
-            ("globe", "Universe"),
-            ("orbit", "Orbit"),
-            ("gauge.with.dots.needle.50percent", "Velocity"),
-            ("books.vertical", "Docs"),
+        // Quick-link tiles — real click targets (placeholders for Universe surfaces).
+        let tiles: [(symbol: String, title: String, url: URL?)] = [
+            ("globe", "Universe", URL(string: "https://github.com/BAWES-Universe")),
+            ("atom", "Orbit", nil),  // nil = focus the start page's own search field
+            ("gauge.with.dots.needle.50percent", "Velocity", URL(string: "https://github.com/BAWES-Universe/bawes-fleet")),
+            ("books.vertical", "Docs", URL(string: "https://github.com/BAWES-Universe/bawes-knowledge")),
         ]
         let tileRow = NSStackView()
         tileRow.orientation = .horizontal
@@ -114,8 +118,8 @@ final class StartPageView: NSView {
         tileRow.translatesAutoresizingMaskIntoConstraints = false
         addSubview(tileRow)
 
-        for (symbol, title) in tiles {
-            tileRow.addArrangedSubview(makeTile(symbol: symbol, title: title))
+        for tile in tiles {
+            tileRow.addArrangedSubview(makeTile(symbol: tile.symbol, title: tile.title, url: tile.url))
         }
 
         NSLayoutConstraint.activate([
@@ -141,7 +145,7 @@ final class StartPageView: NSView {
 
     private func addOrb(color: NSColor, radius: CGFloat, position: CGPoint, duration: CFTimeInterval) {
         let orb = CAGradientLayer()
-        orb.colors = [color.withAlphaComponent(0.32).cgColor, color.withAlphaComponent(0.0).cgColor]
+        orb.colors = [color.withAlphaComponent(0.16).cgColor, color.withAlphaComponent(0.0).cgColor]
         orb.startPoint = CGPoint(x: 0.5, y: 0.5)
         orb.endPoint = CGPoint(x: 0.5, y: 1)
         orb.cornerRadius = radius / 2
@@ -162,36 +166,47 @@ final class StartPageView: NSView {
         orb.add(anim, forKey: "drift-\(index)")
     }
 
-    private func makeTile(symbol: String, title: String) -> NSView {
-        let tile = NSView()
+    private final class TileButton: NSButton {
+        var targetURL: URL?
+    }
+
+    private func makeTile(symbol: String, title: String, url: URL?) -> NSView {
+        let tile = TileButton()
+        tile.isBordered = false
         tile.wantsLayer = true
         tile.layer?.cornerRadius = Theme.cornerRadius
         tile.layer?.backgroundColor = Theme.surfaceGlass.cgColor
         tile.layer?.borderWidth = 1
         tile.layer?.borderColor = Theme.hairline.cgColor
-
-        let icon = NSImageView(image: NSImage(systemSymbolName: symbol, accessibilityDescription: title) ?? NSImage())
-        icon.contentTintColor = Theme.bananaGold
-        icon.symbolConfiguration = NSImage.SymbolConfiguration(pointSize: 18, weight: .medium)
-        icon.translatesAutoresizingMaskIntoConstraints = false
-
-        let label = NSTextField(labelWithString: title)
-        label.font = .systemFont(ofSize: 12, weight: .medium)
-        label.textColor = Theme.textSecondary
-        label.translatesAutoresizingMaskIntoConstraints = false
-
-        tile.addSubview(icon)
-        tile.addSubview(label)
-
-        NSLayoutConstraint.activate([
-            tile.widthAnchor.constraint(equalToConstant: 108),
-            tile.heightAnchor.constraint(equalToConstant: 84),
-            icon.centerXAnchor.constraint(equalTo: tile.centerXAnchor),
-            icon.topAnchor.constraint(equalTo: tile.topAnchor, constant: 16),
-            label.centerXAnchor.constraint(equalTo: tile.centerXAnchor),
-            label.topAnchor.constraint(equalTo: icon.bottomAnchor, constant: 8),
-        ])
+        tile.bezelStyle = .regularSquare
+        tile.imagePosition = .imageAbove
+        tile.image = NSImage(systemSymbolName: symbol, accessibilityDescription: title)
+        tile.image?.size = NSSize(width: 20, height: 20)
+        tile.image?.isTemplate = false
+        tile.contentTintColor = Theme.bananaGold
+        tile.attributedTitle = NSAttributedString(
+            string: title,
+            attributes: [
+                .font: NSFont.systemFont(ofSize: 12, weight: .medium),
+                .foregroundColor: Theme.textSecondary,
+            ]
+        )
+        tile.toolTip = title
+        tile.target = self
+        tile.action = #selector(tilePressed(_:))
+        tile.targetURL = url
+        tile.translatesAutoresizingMaskIntoConstraints = false
+        tile.widthAnchor.constraint(equalToConstant: 108).isActive = true
+        tile.heightAnchor.constraint(equalToConstant: 84).isActive = true
         return tile
+    }
+
+    @objc private func tilePressed(_ sender: NSButton) {
+        if let tile = sender as? TileButton, let url = tile.targetURL {
+            onOpenURL?(url)
+        } else {
+            focusField()
+        }
     }
 
     /// Renders a string filled with a linear gradient (AppKit mask trick).

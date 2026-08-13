@@ -36,7 +36,15 @@ final class ToolbarView: NSView {
 
     private func setup() {
         wantsLayer = true
-        layer?.backgroundColor = NSColor(calibratedWhite: 0, alpha: 0.35).cgColor
+        // Opaque enough that page content never bleeds through the chrome,
+        // with a hairline separating chrome from content.
+        layer?.backgroundColor = NSColor(calibratedWhite: 0.02, alpha: 0.78).cgColor
+
+        let hairline = NSView()
+        hairline.wantsLayer = true
+        hairline.layer?.backgroundColor = NSColor(calibratedWhite: 1, alpha: 0.16).cgColor
+        hairline.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(hairline)
 
         let stack = NSStackView()
         stack.orientation = .horizontal
@@ -81,6 +89,11 @@ final class ToolbarView: NSView {
             stack.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -6),
             stack.leadingAnchor.constraint(equalTo: leadingAnchor),
             stack.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -10),
+
+            hairline.leadingAnchor.constraint(equalTo: leadingAnchor),
+            hairline.trailingAnchor.constraint(equalTo: trailingAnchor),
+            hairline.bottomAnchor.constraint(equalTo: bottomAnchor),
+            hairline.heightAnchor.constraint(equalToConstant: 1),
         ])
     }
 
