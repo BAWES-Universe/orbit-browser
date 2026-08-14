@@ -3,7 +3,6 @@
   margin: 0;
   padding: 0;
 }
-
 :root {
   --bg: #0a0a0f;
   --panel: #12121a;
@@ -14,22 +13,92 @@
   --accent: #f5a623;
   --accent-2: #4ecdc4;
   --online: #4ade80;
+  --offline: #f87171;
 }
-
 html, body, #root {
   height: 100%;
   background: var(--bg);
   color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
-
 .orbit-shell {
   display: flex;
   height: 100%;
   background: var(--bg);
   flex-direction: column;
 }
-
+/* ── Tab bar ──────────────────────────── */
+.orbit-tabbar {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 8px 12px 0;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+}
+.tab-strip {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 110px;
+  max-width: 200px;
+  padding: 8px 10px 8px 14px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-bottom: none;
+  border-radius: 10px 10px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.tab:hover { color: var(--text); }
+.tab.active {
+  background: var(--bg);
+  color: var(--text);
+  border-color: var(--accent);
+  box-shadow: inset 0 2px 0 var(--accent);
+}
+.tab-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tab-close {
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1;
+  padding: 2px 5px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.tab-close:hover { color: var(--accent); background: rgba(245, 166, 35, 0.12); }
+.tab-new {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  margin-bottom: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.tab-new:hover { color: var(--accent); border-color: var(--accent); }
 /* ── Browser chrome (URL bar) ──────────── */
 .orbit-chrome {
   display: flex;
@@ -39,7 +108,6 @@ html, body, #root {
   background: var(--panel);
   border-bottom: 1px solid var(--border);
 }
-
 .url-bar {
   flex: 1;
   display: flex;
@@ -47,7 +115,6 @@ html, body, #root {
   max-width: 720px;
   margin: 0 auto;
 }
-
 .url-bar input {
   flex: 1;
   background: var(--panel-2);
@@ -58,9 +125,7 @@ html, body, #root {
   font-size: 13px;
   outline: none;
 }
-
 .url-bar input:focus { border-color: var(--accent); }
-
 .url-bar button {
   background: var(--accent);
   border: none;
@@ -70,7 +135,6 @@ html, body, #root {
   font-size: 14px;
   cursor: pointer;
 }
-
 .current-url {
   font-size: 11px;
   color: var(--muted);
@@ -79,14 +143,12 @@ html, body, #root {
   text-overflow: ellipsis;
   max-width: 220px;
 }
-
 /* shell layout: dock + viewport + sidecar row below chrome */
 .orbit-shell-row {
   display: flex;
   flex: 1;
   min-height: 0;
 }
-
 /* ── Dock ─────────────────────────────── */
 .orbit-dock {
   width: 64px;
@@ -98,9 +160,7 @@ html, body, #root {
   background: var(--panel);
   border-right: 1px solid var(--border);
 }
-
 .dock-logo { font-size: 28px; margin-bottom: 8px; }
-
 .dock-nav {
   display: flex;
   flex-direction: column;
@@ -108,7 +168,6 @@ html, body, #root {
   width: 100%;
   align-items: center;
 }
-
 .dock-item {
   width: 44px;
   height: 44px;
@@ -120,12 +179,9 @@ html, body, #root {
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
 }
-
 .dock-item:hover { background: var(--panel-2); color: var(--text); }
 .dock-item.active { background: var(--panel-2); color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
-
 .dock-spacer { flex: 1; }
-
 .dock-profile {
   font-size: 13px;
   color: var(--accent);
@@ -133,7 +189,6 @@ html, body, #root {
   border-radius: 10px;
   background: var(--panel-2);
 }
-
 /* ── Viewport ─────────────────────────── */
 .orbit-viewport {
   flex: 1;
@@ -143,7 +198,6 @@ html, body, #root {
   position: relative;
   overflow: hidden;
 }
-
 .viewport-status {
   position: absolute;
   top: 12px;
@@ -158,17 +212,14 @@ html, body, #root {
   align-items: center;
   gap: 6px;
 }
-
 .status-dot { width: 8px; height: 8px; border-radius: 50%; }
 .status-dot.online { background: var(--online); box-shadow: 0 0 8px var(--online); }
-
 .viewport-placeholder {
   margin: auto;
   text-align: center;
   padding: 40px;
   max-width: 520px;
 }
-
 .viewport-placeholder h1 {
   font-size: 28px;
   margin-bottom: 12px;
@@ -177,10 +228,8 @@ html, body, #root {
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
-
 .viewport-placeholder p { color: var(--muted); margin-bottom: 8px; }
 .viewport-placeholder .hint { font-size: 12px; opacity: 0.6; }
-
 /* ── Sidecar ──────────────────────────── */
 .orbit-sidecar {
   width: 320px;
@@ -189,7 +238,6 @@ html, body, #root {
   background: var(--panel);
   border-left: 1px solid var(--border);
 }
-
 .sidecar-header {
   display: flex;
   justify-content: space-between;
@@ -197,7 +245,6 @@ html, body, #root {
   padding: 12px 16px;
   border-bottom: 1px solid var(--border);
 }
-
 .sidecar-header button {
   background: none;
   border: none;
@@ -205,7 +252,6 @@ html, body, #root {
   font-size: 14px;
   cursor: pointer;
 }
-
 .sidecar-chat {
   flex: 1;
   padding: 12px;
@@ -215,24 +261,20 @@ html, body, #root {
   overflow-y: auto;
   font-size: 13px;
 }
-
 .msg {
   padding: 8px 12px;
   border-radius: 12px;
   max-width: 85%;
   line-height: 1.4;
 }
-
 .msg.bot { background: var(--panel-2); align-self: flex-start; border-bottom-left-radius: 4px; }
 .msg.user { background: var(--accent); color: #1a1206; align-self: flex-end; border-bottom-right-radius: 4px; }
-
 .sidecar-input {
   display: flex;
   gap: 8px;
   padding: 12px;
   border-top: 1px solid var(--border);
 }
-
 .sidecar-input input {
   flex: 1;
   background: var(--panel-2);
@@ -243,9 +285,7 @@ html, body, #root {
   font-size: 13px;
   outline: none;
 }
-
 .sidecar-input input:focus { border-color: var(--accent); }
-
 .sidecar-input button {
   background: var(--accent);
   border: none;
@@ -255,7 +295,6 @@ html, body, #root {
   font-size: 16px;
   cursor: pointer;
 }
-
 .sidecar-reopen {
   position: absolute;
   right: 16px;
@@ -268,4 +307,193 @@ html, body, #root {
   font-size: 20px;
   cursor: pointer;
   z-index: 10;
+}
+/* ── Identity chip (workspace header) ──── */
+.identity-chip {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 6px 4px 4px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--panel-2);
+}
+.identity-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a1206;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+}
+.identity-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+.identity-name {
+  font-size: 12px;
+  font-weight: 600;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--text);
+}
+.identity-status {
+  font-size: 10px;
+  color: var(--muted);
+}
+.identity-signin {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text);
+  font-size: 11px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+.identity-signin:hover { border-color: var(--accent); color: var(--accent); }
+.identity-auth-note {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 240px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.45;
+  z-index: 20;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+/* Universe entry — the "one door" (UNIVERSE_URL preload) */
+.identity-universe-link {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 8px 18px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #1a1206;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.identity-universe-link:hover { filter: brightness(1.1); }
+.sidecar-header strong {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+/* ── Sidecar sections (fleet status / quick actions) ── */
+.sidecar-section {
+  padding: 10px 12px 2px;
+}
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.demo-badge {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  padding: 1px 6px;
+  opacity: 0.9;
+}
+.demo-note {
+  font-size: 10px;
+  color: var(--muted);
+  opacity: 0.75;
+  margin: 4px 0 8px;
+}
+.fleet-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.fleet-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 8px;
+  border-radius: 8px;
+  background: var(--panel-2);
+  font-size: 12px;
+}
+.fleet-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.fleet-dot.online { background: var(--online); box-shadow: 0 0 6px var(--online); }
+.fleet-dot.offline { background: var(--offline); box-shadow: 0 0 6px var(--offline); }
+.fleet-name {
+  color: var(--text);
+  font-weight: 600;
+}
+.fleet-role {
+  color: var(--muted);
+  font-size: 11px;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fleet-status {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.fleet-status.online { color: var(--online); }
+.fleet-status.offline { color: var(--offline); }
+.quick-actions {
+  display: flex;
+  gap: 6px;
+  padding: 0 0 4px;
+  flex-wrap: wrap;
+}
+.qa-button {
+  flex: 1;
+  min-width: 92px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 12px;
+  padding: 7px 8px;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.qa-button:hover {
+  border-color: var(--accent-2);
+  color: var(--accent-2);
+}
+/* ── Sidecar chat (local-only demo) ───── */
+.sidecar-chat-wrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+.sidecar-note {
+  font-size: 10px;
+  color: var(--muted);
+  opacity: 0.75;
+  text-align: center;
+  padding: 0 12px 8px;
 }

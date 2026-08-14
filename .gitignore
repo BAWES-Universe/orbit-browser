@@ -1,5 +1,10 @@
 # Dependencies
 node_modules/
+# node_modules may be a SYMLINK to a shared dep cache (e.g. /tmp/tsdeps).
+# A trailing-slash pattern only matches real dirs, so also match the symlink
+# itself — otherwise `git add -A` re-commits it (broke CI twice, see 8e163b7).
+**/node_modules
+web-app/node_modules
 .pnp/
 .pnp.js
 

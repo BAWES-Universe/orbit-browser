@@ -33,6 +33,59 @@ test('orbit sidecar opens, chats, and closes', async ({ page }) => {
   await expect(sidecar).toBeVisible()
 })
 
+test('sidecar expands and collapses via its toggle', async ({ page }) => {
+  await page.goto('/')
+  const sidecar = page.locator('.orbit-sidecar')
+  const collapse = page.getByRole('button', { name: 'Collapse sidecar' })
+  const reopen = page.getByRole('button', { name: 'Open sidecar' })
+
+  // Starts expanded
+  await expect(sidecar).toBeVisible()
+  await expect(collapse).toHaveAttribute('aria-expanded', 'true')
+
+  // Collapse → panel gone, floating reopen button appears (aria-expanded flips)
+  await collapse.click()
+  await expect(sidecar).toBeHidden()
+  await expect(reopen).toBeVisible()
+  await expect(reopen).toHaveAttribute('aria-expanded', 'false')
+
+  // Expand again → panel back, toggle state restored
+  await reopen.click()
+  await expect(sidecar).toBeVisible()
+  await expect(collapse).toHaveAttribute('aria-expanded', 'true')
+})
+
+test('sidecar quick actions render and wire to shell behavior', async ({ page }) => {
+  await page.goto('/')
+  const sidecar = page.locator('.orbit-sidecar')
+
+  // All three quick actions render
+  await expect(sidecar.locator('.quick-actions .qa-button')).toHaveCount(3)
+  await expect(page.getByRole('button', { name: 'Spawn a Brick' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Open Universe' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'View Bananas' })).toBeVisible()
+
+  // Fleet status renders all four bricks (demo data)
+  await expect(page.getByTestId('fleet-brick')).toContainText('online')
+  await expect(page.getByTestId('fleet-zero')).toBeVisible()
+  await expect(page.getByTestId('fleet-hermes-local')).toContainText('offline')
+  await expect(page.getByTestId('fleet-zeus')).toBeVisible()
+
+  // Open Universe is wired to the shell's real navigation
+  await page.getByRole('button', { name: 'Open Universe' }).click()
+  await expect(page.getByTestId('current-url')).toContainText('https://universe.bawes')
+
+  // Spawn a Brick appends a clearly-labeled local demo message to the chat log
+  await page.getByRole('button', { name: 'Spawn a Brick' }).click()
+  await expect(page.locator('.msg').last()).toContainText('demo')
+
+  // Chat input sends to the local log (no backend)
+  await page.getByLabel('Chat message').fill('hello orbit')
+  await page.getByRole('button', { name: 'Send message' }).click()
+  await expect(page.locator('.msg.user').last()).toHaveText('hello orbit')
+  await expect(page.locator('.msg').last()).toContainText('local-only demo')
+})
+
 test('viewport shows UniverseOS offline-ready status', async ({ page }) => {
   await page.goto('/')
   await expect(page.locator('.viewport-status')).toContainText('UniverseOS')
