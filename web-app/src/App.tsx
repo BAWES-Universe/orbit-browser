@@ -1,23 +1,90 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import './App.css'
+import TabBar from './TabBar'
+import { createTab, loadTabState, normalizeTarget, saveTabState, type Tab } from './tabs'
+import IdentityChip from './identity/IdentityChip'
+import { preconnectToUniverse } from './identity/deviceIdentity'
+import OrbitSidecar from './sidecar/OrbitSidecar'
 
-// Orbit Browser — workspace shell (first build chunk)
+// Orbit Browser — workspace shell (merged chunk: tabs + identity + sidecar)
 // Left: universe dock · Center: universe viewport · Right: Orbit sidecar
+// Top: tab strip — open/close/switch tabs, each with its own URL state.
 export default function App() {
   const [sidecarOpen, setSidecarOpen] = useState(true)
-  const [url, setUrl] = useState('')
-  const [currentUrl, setCurrentUrl] = useState('')
+  const [tabState, setTabState] = useState(loadTabState)
+  const [draftUrl, setDraftUrl] = useState('')
+
+  const { tabs, activeTabId } = tabState
+  const activeTab: Tab | undefined = tabs.find((t) => t.id === activeTabId)
+  const currentUrl = activeTab?.url ?? ''
+
+  // Preconnect to the universe on first load (instant first trip — preload step).
+  useEffect(() => {
+    preconnectToUniverse()
+  }, [])
+
+  // Persist the tab session (tabs + active tab) across reloads — local only.
+  useEffect(() => {
+    saveTabState(tabState)
+  }, [tabState])
 
   const navigate = (e: FormEvent) => {
     e.preventDefault()
-    const target = url.trim() || 'browser.bawes'
-    // Normalize: bare words → search? plain URLs load as-is
-    setCurrentUrl(target.startsWith('http') ? target : `https://${target}`)
-    setUrl('')
+    const target = normalizeTarget(draftUrl)
+    // Navigation commits to the active tab only.
+    setTabState((prev) => ({
+      ...prev,
+      tabs: prev.tabs.map((t) => (t.id === prev.activeTabId ? { ...t, url: target } : t)),
+    }))
+    setDraftUrl('')
+  }
+
+  const openTab = () => {
+    const tab = createTab()
+    setTabState((prev) => ({ tabs: [...prev.tabs, tab], activeTabId: tab.id }))
+    setDraftUrl('')
+  }
+
+  const selectTab = (id: string) => {
+    if (id === activeTabId) return
+    const tab = tabs.find((t) => t.id === id)
+    if (!tab) return
+    // The URL bar reflects the active tab's URL, ready to edit.
+    setDraftUrl(tab.url)
+    setTabState((prev) => ({ ...prev, activeTabId: id }))
+  }
+
+  const closeTab = (id: string) => {
+    setTabState((prev) => {
+      const index = prev.tabs.findIndex((t) => t.id === id)
+      if (index === -1) return prev
+      const remaining = prev.tabs.filter((t) => t.id !== id)
+      if (remaining.length === 0) {
+        // Never leave the shell with zero tabs — reopen a fresh one.
+        const tab = createTab()
+        return { tabs: [tab], activeTabId: tab.id }
+      }
+      if (prev.activeTabId !== id) {
+        return { tabs: remaining, activeTabId: prev.activeTabId }
+      }
+      // Closing the active tab: activate the right neighbour, else the left.
+      const neighbour = remaining[index] ?? remaining[index - 1]
+      if (!neighbour) return prev // unreachable: remaining is non-empty
+      return { tabs: remaining, activeTabId: neighbour.id }
+    })
   }
 
   return (
     <div className="orbit-shell">
+      {/* Tab strip — open / close / switch tabs, one URL state per tab */}
+      <TabBar
+        tabs={tabs}
+        activeTabId={activeTabId}
+        onSelect={selectTab}
+        onClose={closeTab}
+        onNew={openTab}
+      />
+
       {/* Universe dock — the places you can go */}
       <aside className="orbit-dock">
         <div className="dock-logo">🪐</div>
@@ -33,13 +100,13 @@ export default function App() {
         <div className="dock-profile" title="Your bananas">🍌 13</div>
       </aside>
 
-      {/* Browser chrome — URL bar (core browser behavior, regression-tested) */}
+      {/* Browser chrome — URL bar + identity chip (one identity, one door) */}
       <div className="orbit-chrome">
         <form className="url-bar" onSubmit={navigate} role="search" aria-label="Address bar">
           <input
             type="text"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
+            value={draftUrl}
+            onChange={(e) => setDraftUrl(e.target.value)}
             placeholder="Enter a URL or search…"
             aria-label="URL input"
             autoCapitalize="none"
@@ -51,6 +118,7 @@ export default function App() {
         {currentUrl && (
           <div className="current-url" data-testid="current-url">{currentUrl}</div>
         )}
+        <IdentityChip />
       </div>
 
       <div className="orbit-shell-row">
@@ -62,33 +130,22 @@ export default function App() {
         <div className="viewport-placeholder">
           <h1>Welcome to the Universe</h1>
           <p>The world loads here — pre-cached, instant, native.</p>
-          <p className="hint">Browser shell v0.1 — workspace UI live</p>
+          <p className="hint">Browser shell v0.2 — tabs + identity + fleet sidecar live</p>
         </div>
       </main>
 
-      {/* Orbit sidecar — the fleet assistant, in every tab */}
-      {sidecarOpen && (
-        <aside className="orbit-sidecar">
-          <div className="sidecar-header">
-            <strong>Orbit</strong>
-            <button onClick={() => setSidecarOpen(false)} aria-label="Close sidecar">✕</button>
-          </div>
-          <div className="sidecar-chat">
-            <div className="msg bot">Hi — I'm your Orbit assistant. Ask me anything about the universe, or tell me what to build.</div>
-            <div className="msg user">Build me a storefront</div>
-            <div className="msg bot">On it — spawning a Brick for your project. You pay for the time it works.</div>
-          </div>
-          <div className="sidecar-input">
-            <input placeholder="Ask Orbit… (spawn a Brick to build)" aria-label="Ask Orbit" />
-            <button>↑</button>
-          </div>
-        </aside>
-      )}
-
-      {/* Sidecar toggle when closed */}
-      {!sidecarOpen && (
-        <button className="sidecar-reopen" onClick={() => setSidecarOpen(true)}>💬</button>
-      )}
+      {/* Orbit sidecar — fleet status, quick actions, local AI-assist chat */}
+      <OrbitSidecar
+        open={sidecarOpen}
+        onToggle={() => setSidecarOpen((o) => !o)}
+        onOpenUniverse={() => {
+          const target = 'https://universe.bawes'
+          setTabState((prev) => ({
+            ...prev,
+            tabs: prev.tabs.map((t) => (t.id === prev.activeTabId ? { ...t, url: target } : t)),
+          }))
+        }}
+      />
       </div>
     </div>
   )
