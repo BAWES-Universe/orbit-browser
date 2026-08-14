@@ -31,7 +31,14 @@ export default defineConfig(({ mode }) => {
               // Universe assets — cache-first for instant repeat loads
               urlPattern: ({ url }) => url.pathname.startsWith('/universe/'),
               handler: 'CacheFirst',
-              options: { cacheName: 'orbit-universe', expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30 } },
+              options: {
+                cacheName: 'orbit-universe',
+                // Only treat real HTTP successes as cacheable; without this,
+                // CacheFirst would store error pages (4xx/5xx) as successful
+                // entries (mirrors the api entry below).
+                cacheableResponse: { statuses: [0, 200] },
+                expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              },
             },
             {
               urlPattern: /^https:\/\/api\.bawes\.universe\/.*/i,
