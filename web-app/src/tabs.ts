@@ -33,7 +33,9 @@ export function createTab(url = ''): Tab {
 /** Normalize a URL-bar submission into a loadable target. */
 export function normalizeTarget(input: string): string {
   const target = input.trim() || DEFAULT_TARGET
-  return target.startsWith('http') ? target : `https://${target}`
+  // CodeRabbit fix: require a COMPLETE http:// or https:// scheme (case-insensitive)
+  // before skipping the prefix — 'httpsfoo.bawes' must become https://httpsfoo.bawes.
+  return /^https?:\/\//i.test(target) ? target : `https://${target}`
 }
 
 /** Human title for a tab, derived from its URL (hostname). */

@@ -3,7 +3,7 @@ import './App.css'
 import TabBar from './TabBar'
 import { createTab, loadTabState, normalizeTarget, saveTabState, type Tab } from './tabs'
 import IdentityChip from './identity/IdentityChip'
-import { preconnectToUniverse } from './identity/deviceIdentity'
+import { preconnectToUniverse, UNIVERSE_URL } from './identity/deviceIdentity'
 import OrbitSidecar from './sidecar/OrbitSidecar'
 
 // Orbit Browser — workspace shell (merged chunk: tabs + identity + sidecar)
@@ -62,6 +62,7 @@ export default function App() {
       if (remaining.length === 0) {
         // Never leave the shell with zero tabs — reopen a fresh one.
         const tab = createTab()
+        setDraftUrl('')
         return { tabs: [tab], activeTabId: tab.id }
       }
       if (prev.activeTabId !== id) {
@@ -70,6 +71,8 @@ export default function App() {
       // Closing the active tab: activate the right neighbour, else the left.
       const neighbour = remaining[index] ?? remaining[index - 1]
       if (!neighbour) return prev // unreachable: remaining is non-empty
+      // CodeRabbit fix: sync the URL bar with the newly active tab (never stale).
+      setDraftUrl(neighbour.url)
       return { tabs: remaining, activeTabId: neighbour.id }
     })
   }
@@ -139,7 +142,9 @@ export default function App() {
         open={sidecarOpen}
         onToggle={() => setSidecarOpen((o) => !o)}
         onOpenUniverse={() => {
-          const target = 'https://universe.bawes'
+          // CodeRabbit fix: use the configured UNIVERSE_URL (same origin as the
+          // identity link + preconnect) — never a hardcoded second origin.
+          const target = UNIVERSE_URL
           setTabState((prev) => ({
             ...prev,
             tabs: prev.tabs.map((t) => (t.id === prev.activeTabId ? { ...t, url: target } : t)),

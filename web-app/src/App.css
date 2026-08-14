@@ -13,6 +13,7 @@
   --accent: #f5a623;
   --accent-2: #4ecdc4;
   --online: #4ade80;
+  --offline: #f87171;
 }
 html, body, #root {
   height: 100%;
@@ -371,7 +372,7 @@ html, body, #root {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
 }
 /* Universe entry — the "one door" (UNIVERSE_URL preload) */
-.universe-entry {
+.identity-universe-link {
   display: inline-block;
   margin-top: 12px;
   padding: 8px 18px;
@@ -382,7 +383,7 @@ html, body, #root {
   font-weight: 600;
   text-decoration: none;
 }
-.universe-entry:hover { filter: brightness(1.1); }
+.identity-universe-link:hover { filter: brightness(1.1); }
 .sidecar-header strong {
   display: flex;
   align-items: center;

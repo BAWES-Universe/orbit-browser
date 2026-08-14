@@ -1,5 +1,4 @@
 import { tabTitle, type Tab } from './tabs'
-import type { MouseEvent } from 'react'
 
 interface TabBarProps {
   tabs: Tab[]
@@ -10,37 +9,37 @@ interface TabBarProps {
 }
 
 // Orbit Browser — tab strip: open, switch, and close tabs.
-// The close control lives inside the tab button (VS Code style); its click
-// must not also select the tab, hence stopPropagation.
+// CodeRabbit fix (Major): the close control is now a SIBLING button of the tab
+// button inside a non-interactive container — both are keyboard-focusable, no
+// nested interactive elements (button-in-button was a11y-invalid).
 export default function TabBar({ tabs, activeTabId, onSelect, onClose, onNew }: TabBarProps) {
-  const handleClose = (e: MouseEvent, id: string) => {
-    e.stopPropagation()
-    onClose(id)
-  }
-
   return (
     <div className="orbit-tabbar">
       <div className="tab-strip" role="tablist" aria-label="Open tabs">
         {tabs.map((tab) => (
-          <button
+          <div
             key={tab.id}
-            type="button"
             role="tab"
             aria-selected={tab.id === activeTabId}
             className={tab.id === activeTabId ? 'tab active' : 'tab'}
             title={tab.url || 'New Tab'}
-            onClick={() => onSelect(tab.id)}
           >
-            <span className="tab-title">{tabTitle(tab)}</span>
-            <span
+            <button
+              type="button"
+              className="tab-select"
+              onClick={() => onSelect(tab.id)}
+            >
+              <span className="tab-title">{tabTitle(tab)}</span>
+            </button>
+            <button
+              type="button"
               className="tab-close"
-              role="button"
-              aria-label="Close tab"
-              onClick={(e) => handleClose(e, tab.id)}
+              aria-label={`Close tab ${tabTitle(tab)}`}
+              onClick={() => onClose(tab.id)}
             >
               ✕
-            </span>
-          </button>
+            </button>
+          </div>
         ))}
       </div>
       <button type="button" className="tab-new" aria-label="New tab" title="New tab" onClick={onNew}>
