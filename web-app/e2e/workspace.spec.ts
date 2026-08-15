@@ -88,3 +88,33 @@ test('URL input: user can type a URL and navigate (regression guard)', async ({ 
   await input.press('Enter')
   await expect(page.getByTestId('current-url')).toContainText('browser.bawes')
 })
+
+test('tabs: open, switch, close (T-003 regression guard)', async ({ page }) => {
+  await page.goto('/')
+
+  // One default tab
+  await expect(page.locator('.tab')).toHaveCount(1)
+
+  // Open a second tab
+  await page.locator('.tab-new').click()
+  await expect(page.locator('.tab')).toHaveCount(2)
+  await expect(page.getByRole('tab', { selected: true })).toHaveCount(1)
+
+  // Navigate in the active (new) tab
+  await page.getByLabel('URL input').fill('universe.bawes')
+  await page.getByLabel('URL input').press('Enter')
+  await expect(page.getByTestId('viewport-url')).toContainText('universe.bawes')
+
+  // Switch back to the first tab — its URL is preserved
+  await page.locator('.tab').first().click()
+  await expect(page.getByTestId('viewport-url')).toContainText('browser.bawes')
+
+  // Close a tab
+  await page.locator('.tab').first().locator('.tab-close').click()
+  await expect(page.locator('.tab')).toHaveCount(1)
+
+  // Closing the last tab creates a fresh one (never zero tabs)
+  await page.locator('.tab-close').first().click()
+  await expect(page.locator('.tab')).toHaveCount(1)
+  await expect(page.getByTestId('viewport-url')).toContainText('browser.bawes')
+})
