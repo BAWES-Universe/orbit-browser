@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type FormEvent, type MouseEvent } from 'react'
 import './App.css'
 
 type Tab = { id: number; title: string; url: string }
@@ -17,7 +17,7 @@ export default function App() {
 
   const activeTab = tabs.find((t) => t.id === activeId) ?? tabs[0]
 
-  const navigate = (e: React.FormEvent) => {
+  const navigate = (e: FormEvent) => {
     e.preventDefault()
     const raw = url.trim()
     const target = raw.startsWith('http') ? raw : raw ? `https://${raw}` : 'browser.bawes'
@@ -31,13 +31,14 @@ export default function App() {
     setActiveId(id)
   }
 
-  const closeTab = (id: number, e?: React.MouseEvent) => {
+  const closeTab = (id: number, e?: MouseEvent) => {
     e?.stopPropagation()
     setTabs((ts) => {
       const idx = ts.findIndex((t) => t.id === id)
       const next = ts.filter((t) => t.id !== id)
       if (next.length === 0) return [{ id: nextTabId++, title: 'New tab', url: 'browser.bawes' }]
-      if (id === activeId) setActiveId(next[Math.min(idx, next.length - 1)].id)
+      const nxt = next[Math.min(idx, next.length - 1)]
+      if (id === activeId && nxt) setActiveId(nxt.id)
       return next
     })
   }
